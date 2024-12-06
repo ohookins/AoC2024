@@ -14,7 +14,7 @@ let solve (test: bool): unit =
     // join it into one long string, in case operations are split over lines
     let text = String.Join("", lines)
 
-    let pattern = Regex "mul\(([0-9]+),([0-9]+)\)"
+    let pattern = Regex "mul\((\d+),(\d+)\)"
 
     let matches = pattern.Matches text
     let result =
