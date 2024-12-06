@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Day3\Part1.fs" />
+    <Content Include="day3\input.txt" />
     <Content Include="day2\test.txt" />
     <Content Include="day2\input.txt" />
     <Compile Include="Day2\Part2.fs" />
