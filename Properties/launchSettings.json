@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AoC2024": {
+      "commandName": "Project",
+      "commandLineArgs": "-d 4 -p 1 -t",
+      "workingDirectory": "C:\\Users\\ohook\\source\\repos\\AoC2024"
+    }
+  }
+}
