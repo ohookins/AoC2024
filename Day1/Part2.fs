@@ -18,6 +18,6 @@ let solve (test: bool): unit =
 
     let similarities = Seq.map (fun (a: int) -> a * Seq.length(Seq.where (fun (b: int) -> a = b) second)) first
 
-    let answer = Seq.reduce(fun acc elem -> acc + elem) similarities
+    let answer = Seq.sum similarities
 
     printfn "%d" answer

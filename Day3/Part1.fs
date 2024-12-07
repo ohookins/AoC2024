@@ -21,6 +21,6 @@ let solve (test: bool): unit =
         matches
         |> Seq.cast<Match>
         |> Seq.map (fun m -> int(m.Groups[1].ToString()) * int(m.Groups[2].ToString()))
-        |> Seq.reduce (fun acc elem -> acc + elem)
+        |> Seq.sum
 
     printfn "%d" result

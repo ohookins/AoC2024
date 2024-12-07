@@ -45,6 +45,6 @@ let solve (test: bool): unit =
             let m = mulPattern.Match op
             int(m.Groups[1].ToString()) * int(m.Groups[2].ToString())
         )
-        |> Seq.reduce (fun acc elem -> acc + elem)
+        |> Seq.sum
 
     printfn "%d" result
