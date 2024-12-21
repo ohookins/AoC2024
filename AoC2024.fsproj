@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Day6\Part1.fs" />
+    <Content Include="day6\test.txt" />
+    <Content Include="day6\input.txt" />
     <Compile Include="Day5\Graph.fs" />
     <Content Include="day5\test.txt" />
     <Compile Include="Day5\Part2.fs" />
@@ -31,6 +34,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser.FSharp" Version="2.9.1" />
+    <PackageReference Include="FSharp.Collections.ParallelSeq" Version="1.2.0" />
   </ItemGroup>
 
 </Project>
