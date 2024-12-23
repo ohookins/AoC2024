@@ -34,8 +34,14 @@ let rec solveOneTerm (lhs: int64) remainingTerms =
         // check for divisibility
         match (lhs % currentTerm) = 0 with
         | true ->
-            let newLhs = lhs / currentTerm 
-            solveOneTerm newLhs newRemainingTerms
+            // If there is perfect division possible, that may not actually lead to the answer, so in this
+            // case let's consider both branches all the way to the end and decide which one to use.
+            let divLhs = lhs / currentTerm
+            let minusLhs = lhs - currentTerm
+            let divSolveOneTerm = solveOneTerm divLhs newRemainingTerms
+            let minusSolveOneTerm = solveOneTerm minusLhs newRemainingTerms
+
+            divSolveOneTerm || minusSolveOneTerm
         | false ->
             // if we end up negative does it matter? could short-cut some calculations but it may not be worth it.
             let newLhs = lhs - currentTerm
