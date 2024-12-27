@@ -59,12 +59,7 @@ let expressionIsCorrect (exp: seq<int64>) =
     | true -> Some(lhs)
     | false -> None
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day7/test.txt"
-        | false -> @"Day7/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     let correctExpressions =
         parseExpressions lines

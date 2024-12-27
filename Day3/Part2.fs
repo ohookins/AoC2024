@@ -20,12 +20,7 @@ let rec removeSkippedSequences (s: seq<string>, skip: bool): seq<string> =
 
         tail
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day3/test.txt"
-        | false -> @"Day3/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     // join it into one long string, in case operations are split over lines
     let text = String.Join("", lines)

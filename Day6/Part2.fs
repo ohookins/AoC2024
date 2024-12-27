@@ -110,12 +110,7 @@ let startingPosition grid =
     |> Seq.choose id
     |> Seq.head
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day6/test.txt"
-        | false -> @"Day6/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     let grid = Array2D.init lines[0].Length lines.Length (fun x y -> lines[y][x])
 

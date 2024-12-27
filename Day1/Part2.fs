@@ -3,12 +3,7 @@
 open System
 open System.IO
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day1/test.txt"
-        | false -> @"Day1/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     let list = Seq.toList lines
 

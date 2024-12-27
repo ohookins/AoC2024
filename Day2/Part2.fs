@@ -12,12 +12,7 @@ let allDescending (s: seq<int>): bool =
 let sufficientDifference (s: seq<int>): bool =
     s |> Seq.pairwise |> Seq.forall (fun (a, b) -> abs(a-b) > 0 && abs(a-b) <= 3)
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day2/test.txt"
-        | false -> @"Day2/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     let list = Seq.toList lines
 

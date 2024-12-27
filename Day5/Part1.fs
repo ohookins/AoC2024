@@ -56,12 +56,7 @@ let rec updateIsCorrect(updateSeq, seenUpdates: Set<int>, rules): UpdateStatus =
         | false -> updateIsCorrect(Seq.tail updateSeq, seenUpdates.Add(currentUpdate), rules)
         | true -> Incorrect
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day5/test.txt"
-        | false -> @"Day5/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     
     let rules = parseRules lines

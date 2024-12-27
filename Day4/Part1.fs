@@ -42,12 +42,7 @@ let findXmasAt (x, y, grid: char array2d) =
     |> Seq.filter id
     |> Seq.length
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day4/test.txt"
-        | false -> @"Day4/input.txt"
-
+let solve (filename: string): unit =
     let lines = File.ReadAllLines filename
     let grid = Array2D.init lines[0].Length lines.Length (fun x y -> lines[y][x])
 

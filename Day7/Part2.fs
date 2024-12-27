@@ -61,12 +61,7 @@ let expressionIsCorrect (exp: seq<int64>) =
     | 0 -> None
     | _ -> Some(lhs)
 
-let solve (test: bool): unit =
-    let filename =
-        match test with
-        | true -> @"Day7/test.txt"
-        | false -> @"Day7/input.txt"
-
+let solve (filename: string): unit =
     let mutable count = 0
 
     let lines = File.ReadAllLines filename

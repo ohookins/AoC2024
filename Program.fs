@@ -12,7 +12,12 @@ let findAndRunModule(day: int, part: int, test: bool) =
     let assembly = Assembly.GetExecutingAssembly()
     let moduleType = assembly.GetType($"Day{day}.Part{part}")
     let method = moduleType.GetMethod("solve")
-    method.Invoke(null, [|test|])
+    let filename =
+        match test with
+        | true -> $"Day{day}/test.txt"
+        | false -> $"Day{day}/input.txt"
+
+    method.Invoke(null, [|filename|])
 
 let run (opts: options) =
     printfn "day: %d" opts.day
