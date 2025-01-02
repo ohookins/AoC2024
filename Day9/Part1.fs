@@ -55,6 +55,19 @@ let handleFreeBlocks (freeBlocks: int64) (blocks: list<Block>) =
         // left over free blocks, put them back on the list
         (Free({id=0; blocks=freeBlocks}) :: blocks)
 
+let handleRemainingDataBlocks (writtenBlocks: int64) (freeBlocks: int64) (newBlocks: list<Block>) (d: File) =
+    let remainingDataBlocks = d.blocks - writtenBlocks
+    let remainingFreeBlocks = freeBlocks - writtenBlocks
+
+    match remainingDataBlocks with
+    | 0L ->
+        handleFreeBlocks remainingFreeBlocks newBlocks                    
+    | _ ->
+        // some left over blocks from the current file
+        let revNewBlocks = List.rev newBlocks
+        let revAppendedNewBlocks = Data({id=d.id; blocks=remainingDataBlocks}) :: revNewBlocks
+        List.rev revAppendedNewBlocks
+
 [<TailCall>]
 let rec defrag (files: list<File>) (blocks: list<Block>) =
     debug $"number of files: {List.length files}, number of blocks: {List.length blocks}"
@@ -98,21 +111,10 @@ let rec defrag (files: list<File>) (blocks: list<Block>) =
                 // Also need to check if there are remaining free spaces which need to go back
                 // on the free block list.
                 let writtenBlocks = min d.blocks freeBlocks
-                let remainingDataBlocks = d.blocks - writtenBlocks
-                let remainingFreeBlocks = freeBlocks - writtenBlocks
                 let newFiles = {id=d.id; blocks=writtenBlocks } :: files 
-                debug $"defragged {writtenBlocks} blocks, free:{remainingFreeBlocks}; data:{remainingDataBlocks}"
 
-                match remainingDataBlocks with
-                | 0L ->
-                    let freeBlocks = handleFreeBlocks remainingFreeBlocks newBlocks
-                    defrag newFiles freeBlocks                    
-                | _ ->
-                    // some left over blocks from the current file
-                    let revNewBlocks = List.rev newBlocks
-                    let revAppendedNewBlocks = Data({id=d.id; blocks=remainingDataBlocks}) :: revNewBlocks
-                    let appendedNewBlocks = List.rev revAppendedNewBlocks
-                    defrag newFiles appendedNewBlocks
+                let blocks = handleRemainingDataBlocks writtenBlocks freeBlocks newBlocks d
+                defrag newFiles blocks
 
 let rec makeChecksum (startBlock: int64) (files: List<File>) =
     let head = List.head files
