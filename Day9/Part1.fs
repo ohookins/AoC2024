@@ -46,6 +46,15 @@ let parseInput (filename: string) =
     |> Seq.collect id // flatten
     |> Seq.toList
 
+let handleFreeBlocks (freeBlocks: int64) (blocks: list<Block>) =
+    match freeBlocks with
+    | 0L ->
+        // perfect fit between free and data blocks
+        blocks
+    | _ ->
+        // left over free blocks, put them back on the list
+        (Free({id=0; blocks=freeBlocks}) :: blocks)
+
 [<TailCall>]
 let rec defrag (files: list<File>) (blocks: list<Block>) =
     debug $"number of files: {List.length files}, number of blocks: {List.length blocks}"
@@ -96,21 +105,13 @@ let rec defrag (files: list<File>) (blocks: list<Block>) =
 
                 match remainingDataBlocks with
                 | 0L ->
-                    match remainingFreeBlocks with
-                    | 0L ->
-                        // perfect fit between free and data blocks
-                        debug "defrag newFiles newBlocks"
-                        defrag newFiles newBlocks
-                    | _ ->
-                        // left over free blocks, put them back on the list
-                        debug "recursing into defrag with some additional free blocks"
-                        defrag newFiles (Free({id=0; blocks=remainingFreeBlocks}) :: newBlocks)
+                    let freeBlocks = handleFreeBlocks remainingFreeBlocks newBlocks
+                    defrag newFiles freeBlocks                    
                 | _ ->
                     // some left over blocks from the current file
                     let revNewBlocks = List.rev newBlocks
                     let revAppendedNewBlocks = Data({id=d.id; blocks=remainingDataBlocks}) :: revNewBlocks
                     let appendedNewBlocks = List.rev revAppendedNewBlocks
-                    debug $"defrag newFiles appendedNewBlocks ({appendedNewBlocks |> List.length})"
                     defrag newFiles appendedNewBlocks
 
 let rec makeChecksum (startBlock: int64) (files: List<File>) =
