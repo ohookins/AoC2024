@@ -4,8 +4,8 @@ open System.IO
 open System
 
 type File = {
-    id: int;
-    blocks: int;
+    id: int64; // the checksum will likely get big so I'm lazy and using int64 here
+    blocks: int64;
 }
 
 // This is now a hack, since I want to record the id and the block count with the Data block.
@@ -17,7 +17,8 @@ type Block =
 
 let debug msg =
     let ts = DateTime.Now.ToString("HH:mm:ss.fff")
-    printfn "%s: %s" ts msg
+    // printfn "%s: %s" ts msg
+    ()
 
 let parseInput (filename: string) =
     File.ReadAllLines filename
@@ -28,37 +29,38 @@ let parseInput (filename: string) =
         // last element can be a lone data element
         match c.Length with
         | 2 -> 
-            seq { Data({id=index; blocks=System.Int32.Parse(c[0].ToString())}); Free({id=0; blocks=System.Int32.Parse(c[1].ToString())}) }
+            seq { Data({id=index; blocks=System.Int64.Parse(c[0].ToString())}); Free({id=0; blocks=System.Int64.Parse(c[1].ToString())}) }
         | _ ->
-            seq { Data({id=index; blocks=System.Int32.Parse(c[0].ToString())}) }
+            seq { Data({id=index; blocks=System.Int64.Parse(c[0].ToString())}) }
     )
     |> Seq.collect id // flatten
+    |> Seq.toList
 
 [<TailCall>]
-let rec defrag (files: seq<File>) (blocks: seq<Block>) =
-    debug $"number of files: {Seq.length files}, number of blocks: {Seq.length blocks}"
-    let head = Seq.head blocks
-    let tail = Seq.tail blocks
+let rec defrag (files: list<File>) (blocks: list<Block>) =
+    debug $"number of files: {List.length files}, number of blocks: {List.length blocks}"
+    let head = List.head blocks
+    let tail = List.tail blocks
 
     // Too many nested matches.
-    match Seq.length tail with
+    match List.length tail with
     | 0 ->
         match head with
-        | Data d -> Seq.append files (seq { d })
+        | Data d -> d :: files
         | Free f -> files
 
     | _ ->
         match head with
         | Data d ->
-            let newFiles = Seq.append files (seq { d })
+            let newFiles = d :: files
             debug "defrag newFiles tail"
             defrag newFiles tail
 
         | Free f ->
             let freeBlocks = f.blocks
             debug $"free blocks {freeBlocks}"
-            let lastElem = Seq.last tail
-            let newBlocks = Seq.removeAt ((Seq.length tail) - 1) tail
+            let lastElem = List.last tail
+            let newBlocks = List.removeAt ((List.length tail) - 1) tail
 
             match lastElem with
             | Free _ ->
@@ -74,22 +76,45 @@ let rec defrag (files: seq<File>) (blocks: seq<Block>) =
                 // if we run out of space.
                 let writtenBlocks = min d.blocks freeBlocks
                 let remainingBlocks = d.blocks - writtenBlocks
-                let newFiles = Seq.append files (seq {{id=d.id; blocks=writtenBlocks }}) 
+                let newFiles = {id=d.id; blocks=writtenBlocks } :: files 
                 debug $"defragged {writtenBlocks} blocks"
 
                 match remainingBlocks with
-                | 0 -> 
+                | 0L -> 
                     debug "defrag newFiles newBlocks"
                     defrag newFiles newBlocks
                 | _ ->
                     // some left over blocks from the current file
-                    let appendedNewBlocks = Seq.append newBlocks (seq { Data({id=d.id; blocks=remainingBlocks}) })
-                    debug $"defrag newFiles appendedNewBlocks ({appendedNewBlocks |> Seq.length})"
+                    let revNewBlocks = List.rev newBlocks
+                    let revAppendedNewBlocks = Data({id=d.id; blocks=remainingBlocks}) :: revNewBlocks
+                    let appendedNewBlocks = List.rev revAppendedNewBlocks
+                    debug $"defrag newFiles appendedNewBlocks ({appendedNewBlocks |> List.length})"
                     defrag newFiles appendedNewBlocks
 
-let solve (filename: string): unit =
-    let blocks =
-        parseInput filename
-        |> defrag Seq.empty
+let rec makeChecksum (startBlock: int64) (files: List<File>) =
+    let head = List.head files
+    let tail = List.tail files
 
-    printfn "%d" (Seq.length blocks)
+    // figure out how much we need to multiply the ID by, given the start block
+    // and end block numbers for the file. It's the old "sum numbers 1...100" thing.
+    let blockCount = head.blocks
+    let endBlock = startBlock + blockCount
+    let blockMultiplier = (startBlock + endBlock) * blockCount / 2L
+    let blockChecksum = blockMultiplier * head.id
+
+    match List.length tail with
+    | 0 -> blockChecksum
+    | _ -> blockChecksum + makeChecksum (endBlock+1L) tail
+
+let solve (filename: string): unit =
+    let checksum =
+        parseInput filename
+        |> defrag List.empty
+        |> List.rev
+        |> List.map (fun f ->
+            for i = 0 to (int(f.blocks) - 1) do
+                printf "%d" f.id
+        ) |> ignore
+        // |> makeChecksum 0L
+
+    printfn ""
