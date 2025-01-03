@@ -68,6 +68,34 @@ let handleRemainingDataBlocks (writtenBlocks: int64) (freeBlocks: int64) (newBlo
         let revAppendedNewBlocks = Data({id=d.id; blocks=remainingDataBlocks}) :: revNewBlocks
         List.rev revAppendedNewBlocks
 
+let handleFreeBlock (freeBlock: File) (files: list<File>) (head: Block) (tail: list<Block>): (list<File>*list<Block>) =
+    let freeBlockCount = freeBlock.blocks
+    debug $"free blocks {freeBlockCount}"
+    let lastElem = List.last tail
+    let newBlocks = List.removeAt ((List.length tail) - 1) tail
+
+    match lastElem with
+    | Free _ ->
+        // Last element in the block sequence is free space, which we don't care about.
+        // Do the following:
+        // 1. strip the free block from the end of the original sequence
+        // 2. put the leading free block back at the start of the list
+        // 3. recurse again
+        debug $"removing unnecessary free block at end and starting defrag again"
+        (files, (head :: newBlocks))
+    | Data d ->
+        // Last element is a file. We need to put as many blocks of it as will fit in
+        // the current space, and then put back any left over back onto the block sequence
+        // if we run out of space.
+        // Also need to check if there are remaining free spaces which need to go back
+        // on the free block list.
+        let writtenBlocks = min d.blocks freeBlockCount
+        let newFiles = {id=d.id; blocks=writtenBlocks } :: files 
+
+        let blocks = handleRemainingDataBlocks writtenBlocks freeBlockCount newBlocks d
+        (newFiles, blocks)
+
+
 [<TailCall>]
 let rec defrag (files: list<File>) (blocks: list<Block>) =
     debug $"number of files: {List.length files}, number of blocks: {List.length blocks}"
@@ -75,9 +103,9 @@ let rec defrag (files: list<File>) (blocks: list<Block>) =
     let head = List.head blocks
     let tail = List.tail blocks
 
-    // Too many nested matches.
     match List.length tail with
     | 0 ->
+        // terminating case only
         match head with
         | Data d -> d :: files
         | Free f -> files
@@ -90,31 +118,8 @@ let rec defrag (files: list<File>) (blocks: list<Block>) =
             defrag newFiles tail
 
         | Free f ->
-            let freeBlocks = f.blocks
-            debug $"free blocks {freeBlocks}"
-            let lastElem = List.last tail
-            let newBlocks = List.removeAt ((List.length tail) - 1) tail
-
-            match lastElem with
-            | Free _ ->
-                // Last element in the block sequence is free space, which we don't care about.
-                // Do the following:
-                // 1. strip the free block from the end of the original sequence
-                // 2. put the leading free block back at the start of the list
-                // 3. recurse again
-                debug $"removing unnecessary free block at end and starting defrag again"
-                defrag files (head :: newBlocks)
-            | Data d ->
-                // Last element is a file. We need to put as many blocks of it as will fit in
-                // the current space, and then put back any left over back onto the block sequence
-                // if we run out of space.
-                // Also need to check if there are remaining free spaces which need to go back
-                // on the free block list.
-                let writtenBlocks = min d.blocks freeBlocks
-                let newFiles = {id=d.id; blocks=writtenBlocks } :: files 
-
-                let blocks = handleRemainingDataBlocks writtenBlocks freeBlocks newBlocks d
-                defrag newFiles blocks
+            let (files, blocks) = handleFreeBlock f files head tail
+            defrag files blocks
 
 let rec makeChecksum (startBlock: int64) (files: List<File>) =
     let head = List.head files
