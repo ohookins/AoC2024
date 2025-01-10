@@ -25,17 +25,20 @@ let debug msg =
     | true -> printfn "%s: %s" ts msg
     | _ -> ()
 
-let debugFileList (files: list<File>) =
+let debugDataBlockList (blocks: list<Block>*list<Block>) =
+    let dataBlocks = fst blocks
+
     match debugEnabled with
     | true ->
-        files
-        |> List.rev
-        |> List.iter (fun f ->
-        for i = 0 to (int(f.size) - 1) do
-            printf "%d" f.id
+        dataBlocks
+        |> List.iter (fun block ->
+            match block with
+            | Data b -> printfn "id:%d address:%d size:%d" b.id b.address b.size
+            | Free b -> printfn "id:%d address:%d size:%d" b.id b.address b.size
         )
         printfn ""
-    | _ -> ()
+        blocks
+    | _ -> blocks
 
 // In part 1 the parsing assembles the data into a format that works in that case but I think in part 2 we'd be
 // better served by just having data blocks with their size and starting location. There's a bit more effort
@@ -76,13 +79,16 @@ let rec splitBlocks (currentAddress: int) (splitted: list<Block>*list<Block>) (o
         | Free f -> f.size
 
     let newBlocks =
-        match head with
-        | Data d ->
-            let dataBlock = Data{id=d.id; address=currentAddress; size = d.size}
-            (dataBlock :: dataBlocks, freeBlocks)
-        | Free f ->
-            let freeBlock = Free{id=0; address=currentAddress; size = f.size}
-            (dataBlocks, freeBlock :: freeBlocks)
+        match size with
+        | 0 -> (dataBlocks, freeBlocks) // strip out empty blocks
+        | _ ->
+            match head with
+            | Data d ->
+                let dataBlock = Data{id=d.id; address=currentAddress; size = d.size}
+                (dataBlock :: dataBlocks, freeBlocks)
+            | Free f ->
+                let freeBlock = Free{id=0; address=currentAddress; size = f.size}
+                (dataBlocks, freeBlock :: freeBlocks)
 
     match List.length tail with
     | 0 ->
@@ -203,7 +209,7 @@ let rec makeChecksum (files: List<File>) =
     let blockMultiplier = int64((float(startBlock) + float(endBlock)) * (float(blockCount) / 2.0))
     let blockChecksum = blockMultiplier * int64(head.id)
 
-    debug $"blocks: {startBlock}-{endBlock}; {blockMultiplier}*{head.id}; checksum: {blockChecksum}"
+    // debug $"blocks: {startBlock}-{endBlock}; {blockMultiplier}*{head.id}; checksum: {blockChecksum}"
 
     match List.length tail with
     | 0 -> blockChecksum
@@ -213,6 +219,7 @@ let solve (filename: string): unit =
     let checksum =
         parseInput filename
         |> splitBlocks 0 (List.empty, List.empty)
+        |> debugDataBlockList
         |> defrag List.empty
         |> List.sortBy (fun f -> f.address)
         // |> List.map (fun f ->

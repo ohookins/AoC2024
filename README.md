@@ -15,3 +15,7 @@ This year to avoid _some_ of the boilerplate I've got a single entrypoint for al
 ```shell
 bin/Debug/net8.0/AoC2024 -d DAY -p PART [-t]
 ```
+
+## Notes
+
+- Day 9 Part 2 - didn't get the correct answer. I suspected maybe there are some adjacent free blocks that need to be merged, but couldn't find evidence of this. In any case the checksum I arrived at is too high.
